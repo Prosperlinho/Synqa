@@ -1,0 +1,385 @@
+// TrustWallet AI — Prisma schema
+// Postgres via Supabase. Run `npx prisma migrate dev` after setting DATABASE_URL.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
+enum Role {
+  USER
+  MODERATOR
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  BANNED
+}
+
+enum Chain {
+  ETHEREUM
+  BNB_CHAIN
+  SOLANA
+  BASE
+  ARBITRUM
+  POLYGON
+  AVALANCHE
+  OPTIMISM
+  TRON
+}
+
+enum WalletType {
+  PERSONAL
+  CONTRACT
+  EXCHANGE
+  BRIDGE
+  MIXER
+  CONTRACT_PROXY
+  MULTISIG
+  UNKNOWN
+}
+
+enum VerificationStatus {
+  UNVERIFIED
+  COMMUNITY_VERIFIED
+  OFFICIALLY_VERIFIED
+  FLAGGED_SCAM
+}
+
+enum LabelSource {
+  ADMIN
+  COMMUNITY
+  PARTNER_FEED
+  HEURISTIC
+}
+
+enum ScamCategory {
+  PHISHING
+  RUG_PULL
+  FAKE_GIVEAWAY
+  IMPERSONATION
+  ROMANCE_SCAM
+  PONZI_SCHEME
+  MALICIOUS_CONTRACT
+  ADDRESS_POISONING
+  FAKE_SUPPORT
+  EXCHANGE_SCAM
+  NFT_SCAM
+  OTHER
+}
+
+enum ReportStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  FLAGGED_FALSE
+}
+
+enum VoteValue {
+  UP
+  DOWN
+}
+
+enum NotificationType {
+  WALLET_NEW_REPORT
+  WALLET_SCORE_CHANGE
+  REPORT_STATUS_CHANGE
+  COMMENT_REPLY
+  SYSTEM
+}
+
+enum AdminAction {
+  APPROVE_REPORT
+  REJECT_REPORT
+  FLAG_FALSE_REPORT
+  ADD_LABEL
+  REMOVE_LABEL
+  BAN_USER
+  SUSPEND_USER
+  REINSTATE_USER
+  EDIT_WALLET_SCORE
+}
+
+// ---------------------------------------------------------------------------
+// Core models
+// ---------------------------------------------------------------------------
+
+model User {
+  id            String     @id @default(cuid())
+  supabaseId    String     @unique // maps to Supabase auth.users.id
+  username      String     @unique
+  email         String     @unique
+  avatarUrl     String?
+  role          Role       @default(USER)
+  status        UserStatus @default(ACTIVE)
+  reputation    Int        @default(0)
+  walletAddress String?    @unique // optional connected wallet (WalletConnect)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  scamReports   ScamReport[]
+  comments      Comment[]
+  votes         Vote[]
+  bookmarks     Bookmark[]
+  follows       WalletFollow[]
+  notifications Notification[]
+  adminLogs     AdminLog[]     @relation("AdminLogActor")
+
+  @@index([role])
+  @@index([status])
+}
+
+model Wallet {
+  id                 String              @id @default(cuid())
+  address            String              // raw, checksum-preserved
+  addressLower       String              // lowercased, used for lookups
+  chain               Chain
+  ens                String?
+  walletType         WalletType          @default(UNKNOWN)
+  entityName         String?             // e.g. "Binance", "Jump Trading" if known
+  exchangeName       String?
+  isContract         Boolean             @default(false)
+  verificationStatus VerificationStatus  @default(UNVERIFIED)
+
+  riskScore   Int      @default(0) // 0-100, higher = riskier
+  trustScore  Int      @default(50) // 0-100, higher = more trustworthy
+
+  firstSeenAt DateTime?
+  lastActiveAt DateTime?
+  txCount     Int      @default(0)
+  tokenHoldingsCount Int @default(0)
+  nftHoldingsCount   Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  labels        WalletLabel[]
+  scores        WalletScoreHistory[]
+  scamReports   ScamReport[]
+  comments      Comment[]
+  bookmarks     Bookmark[]
+  follows       WalletFollow[]
+  connectedChains WalletConnectedChain[]
+  holdings      TokenHolding[]
+  nfts          NftHolding[]
+  activity      WalletActivity[]
+
+  @@unique([addressLower, chain])
+  @@index([addressLower])
+  @@index([entityName])
+  @@index([riskScore])
+  @@index([verificationStatus])
+}
+
+// A wallet can be recognized as active/present on more than one chain (e.g. same EOA on EVM chains)
+model WalletConnectedChain {
+  id       String @id @default(cuid())
+  walletId String
+  wallet   Wallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  chain    Chain
+
+  @@unique([walletId, chain])
+}
+
+model WalletLabel {
+  id        String      @id @default(cuid())
+  walletId  String
+  wallet    Wallet      @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  label     String      // e.g. "Known Phishing", "Binance Hot Wallet 14"
+  source    LabelSource @default(COMMUNITY)
+  addedById String?
+  confidence Int        @default(80) // 0-100
+  createdAt DateTime    @default(now())
+
+  @@index([walletId])
+  @@index([label])
+}
+
+model WalletScoreHistory {
+  id         String   @id @default(cuid())
+  walletId   String
+  wallet     Wallet   @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  riskScore  Int
+  trustScore Int
+  reason     String?
+  recordedAt DateTime @default(now())
+
+  @@index([walletId, recordedAt])
+}
+
+model TokenHolding {
+  id           String  @id @default(cuid())
+  walletId     String
+  wallet       Wallet  @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  tokenSymbol  String
+  tokenName    String
+  balance      String  // stored as string to preserve precision
+  usdValue     Float?
+  contractAddr String?
+
+  @@index([walletId])
+}
+
+model NftHolding {
+  id           String  @id @default(cuid())
+  walletId     String
+  wallet       Wallet  @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  collection   String
+  tokenId      String
+  imageUrl     String?
+  floorPriceUsd Float?
+
+  @@index([walletId])
+}
+
+model WalletActivity {
+  id          String   @id @default(cuid())
+  walletId    String
+  wallet      Wallet   @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  txHash      String
+  direction   String   // "IN" | "OUT" | "CONTRACT_CALL"
+  counterparty String?
+  valueUsd    Float?
+  occurredAt  DateTime
+
+  @@index([walletId, occurredAt])
+}
+
+// ---------------------------------------------------------------------------
+// Scam reporting & community reputation
+// ---------------------------------------------------------------------------
+
+model ScamReport {
+  id              String       @id @default(cuid())
+  walletId        String
+  wallet          Wallet       @relation(fields: [walletId], references: [id])
+  reporterId      String?
+  reporter        User?        @relation(fields: [reporterId], references: [id])
+  category        ScamCategory
+  description     String       @db.Text
+  transactionHash String?
+  websiteUrl      String?
+  socialMediaUrl  String?
+  incidentDate    DateTime?
+  status          ReportStatus @default(PENDING)
+  moderatedById   String?
+  moderationNote  String?
+  ipHash          String?      // hashed for abuse/spam detection, never raw IP
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  evidence Evidence[]
+  comments Comment[]
+  votes    Vote[]
+
+  @@index([walletId])
+  @@index([status])
+  @@index([category])
+}
+
+model Evidence {
+  id           String     @id @default(cuid())
+  reportId     String
+  report       ScamReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  fileUrl      String     // Supabase Storage URL
+  fileType     String
+  fileSizeKb   Int?
+  uploadedAt   DateTime   @default(now())
+
+  @@index([reportId])
+}
+
+model Comment {
+  id         String   @id @default(cuid())
+  walletId   String?
+  wallet     Wallet?  @relation(fields: [walletId], references: [id])
+  reportId   String?
+  report     ScamReport? @relation(fields: [reportId], references: [id])
+  authorId   String
+  author     User     @relation(fields: [authorId], references: [id])
+  parentId   String?
+  parent     Comment? @relation("CommentReplies", fields: [parentId], references: [id])
+  replies    Comment[] @relation("CommentReplies")
+  body       String   @db.Text
+  isHidden   Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  @@index([walletId])
+  @@index([reportId])
+}
+
+model Vote {
+  id       String     @id @default(cuid())
+  reportId String
+  report   ScamReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  userId   String
+  user     User       @relation(fields: [userId], references: [id])
+  value    VoteValue
+  createdAt DateTime  @default(now())
+
+  @@unique([reportId, userId])
+}
+
+model Bookmark {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  walletId  String
+  wallet    Wallet   @relation(fields: [walletId], references: [id])
+  note      String?
+  createdAt DateTime @default(now())
+
+  @@unique([userId, walletId])
+}
+
+model WalletFollow {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  walletId  String
+  wallet    Wallet   @relation(fields: [walletId], references: [id])
+  alertOnNewReport Boolean @default(true)
+  alertOnScoreChange Boolean @default(true)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, walletId])
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id])
+  type      NotificationType
+  title     String
+  body      String
+  link      String?
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  @@index([userId, isRead])
+}
+
+model AdminLog {
+  id        String      @id @default(cuid())
+  actorId   String
+  actor     User        @relation("AdminLogActor", fields: [actorId], references: [id])
+  action    AdminAction
+  targetType String     // "REPORT" | "WALLET" | "USER" | "LABEL"
+  targetId  String
+  metadata  Json?
+  createdAt DateTime    @default(now())
+
+  @@index([actorId])
+  @@index([targetType, targetId])
+}
