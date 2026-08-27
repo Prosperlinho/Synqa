@@ -46,7 +46,9 @@ export function walletConnectConnector(params: { projectId: string; chains: read
     name: 'WalletConnect',
     type: 'walletConnect',
 
-    async connect({ chainId }: { chainId?: number } = {}) {
+    async connect<withCapabilities extends boolean = false>(
+      { chainId, withCapabilities: withCaps }: { chainId?: number; withCapabilities?: boolean | withCapabilities } = {}
+    ) {
       const provider = await getWcProvider();
       await provider.connect(chainId ? { chains: [chainId] } : undefined);
 
@@ -63,7 +65,15 @@ export function walletConnectConnector(params: { projectId: string; chains: read
         config.emitter.emit('disconnect');
       });
 
-      return { accounts: accounts as Address[], chainId: currentChainId };
+      if (withCaps) {
+        const accountsWithCapabilities = accounts.map((address) => ({
+          address: address as Address,
+          capabilities: {} as Record<string, unknown>,
+        }));
+        return { accounts: accountsWithCapabilities as unknown as readonly { address: `0x${string}`; capabilities: Record<string, unknown> }[], chainId: currentChainId } as any;
+      }
+
+      return { accounts: accounts as unknown as readonly `0x${string}`[], chainId: currentChainId } as any;
     },
 
     async disconnect() {

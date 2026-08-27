@@ -40,26 +40,30 @@ export function injectedConnector() {
     id: 'injected',
     name: 'Browser Wallet',
     type: 'injected',
-
-    async connect({ chainId }: { chainId?: number } = {}) {
+    async connect<withCapabilities extends boolean = false>(
+      { chainId, isReconnecting, withCapabilities: withCaps, }: { chainId?: number; isReconnecting?: boolean; withCapabilities?: boolean | withCapabilities } = {}
+    ) {
       const provider = await this.getProvider();
       if (!provider) {
         throw new Error('No injected wallet found. Install MetaMask or another browser wallet.');
       }
 
-      const accounts = (await provider.request({ method: 'eth_requestAccounts' })) as string[];
+      const prov = provider as unknown as Eip1193Provider;
+      const accountsRaw = (await prov.request({ method: 'eth_requestAccounts' })) as string[];
 
       if (!accountsChangedHandler) {
         accountsChangedHandler = (accs: string[]) => config.emitter.emit('change', { accounts: accs as Address[] });
-        provider.on('accountsChanged', accountsChangedHandler);
+        prov.on('accountsChanged', accountsChangedHandler);
       }
+
       if (!chainChangedHandler) {
         chainChangedHandler = (chainIdHex: string) => config.emitter.emit('change', { chainId: Number(chainIdHex) });
-        provider.on('chainChanged', chainChangedHandler);
+        prov.on('chainChanged', chainChangedHandler);
       }
+
       if (!disconnectHandlerRef) {
         disconnectHandlerRef = () => config.emitter.emit('disconnect');
-        provider.on('disconnect', disconnectHandlerRef);
+        prov.on('disconnect', disconnectHandlerRef);
       }
 
       let currentChainId = await this.getChainId();
@@ -68,15 +72,23 @@ export function injectedConnector() {
         currentChainId = chain?.id ?? currentChainId;
       }
 
-      return { accounts: accounts as Address[], chainId: currentChainId };
+      if (withCaps) {
+        const accounts = accountsRaw.map((address) => ({ address: address as Address, capabilities: {} as Record<string, unknown> }));
+        // Cast to any to satisfy wagmi's complex conditional generic return type while preserving runtime shape
+        return { accounts: accounts as unknown as readonly { address: `0x${string}`; capabilities: Record<string, unknown> }[], chainId: currentChainId } as any;
+      }
+
+      // No capabilities requested — return addresses only
+      return { accounts: accountsRaw as unknown as readonly `0x${string}`[], chainId: currentChainId } as any;
     },
 
     async disconnect() {
       const provider = await this.getProvider();
       if (!provider) return;
-      if (accountsChangedHandler) provider.removeListener('accountsChanged', accountsChangedHandler);
-      if (chainChangedHandler) provider.removeListener('chainChanged', chainChangedHandler);
-      if (disconnectHandlerRef) provider.removeListener('disconnect', disconnectHandlerRef);
+      const prov = provider as unknown as Eip1193Provider;
+      if (accountsChangedHandler) prov.removeListener('accountsChanged', accountsChangedHandler);
+      if (chainChangedHandler) prov.removeListener('chainChanged', chainChangedHandler);
+      if (disconnectHandlerRef) prov.removeListener('disconnect', disconnectHandlerRef);
       accountsChangedHandler = undefined;
       chainChangedHandler = undefined;
       disconnectHandlerRef = undefined;
@@ -85,20 +97,24 @@ export function injectedConnector() {
     async getAccounts() {
       const provider = await this.getProvider();
       if (!provider) return [];
-      const accounts = (await provider.request({ method: 'eth_accounts' })) as string[];
+      const prov = provider as unknown as Eip1193Provider;
+      const accounts = (await prov.request({ method: 'eth_accounts' })) as string[];
       return accounts as Address[];
     },
 
     async getChainId() {
       const provider = await this.getProvider();
       if (!provider) throw new Error('No injected wallet found.');
-      const chainIdHex = (await provider.request({ method: 'eth_chainId' })) as string;
+      const prov = provider as unknown as Eip1193Provider;
+      const chainIdHex = (await prov.request({ method: 'eth_chainId' })) as string;
       return Number(chainIdHex);
     },
 
     async getProvider() {
-      if (typeof window === 'undefined') return undefined;
-      return window.ethereum;
+      if (typeof window === 'undefined' || !window.ethereum) {
+        throw new Error('No injected wallet found.');
+      }
+      return window.ethereum as Eip1193Provider;
     },
 
     async isAuthorized() {
@@ -117,14 +133,16 @@ export function injectedConnector() {
       if (!chain) throw new Error(`Chain ${chainId} is not configured.`);
 
       try {
-        await provider.request({
+        const prov = provider as unknown as Eip1193Provider;
+        await prov.request({
           method: 'wallet_switchEthereumChain',
           params: [{ chainId: `0x${chainId.toString(16)}` }],
         });
       } catch (err: any) {
         // 4902 = chain not yet added to the wallet
         if (err?.code === 4902) {
-          await provider.request({
+          const prov = provider as unknown as Eip1193Provider;
+          await prov.request({
             method: 'wallet_addEthereumChain',
             params: [
               {
