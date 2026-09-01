@@ -7,6 +7,7 @@ import { Navbar } from '@/components/layout/navbar';
 import { Footer } from '@/components/layout/footer';
 import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import { getCurrentUser } from '@/lib/auth';
 
 const display = Space_Grotesk({ subsets: ['latin'], variable: '--font-display', weight: ['500', '600', '700'] });
 const body = Inter({ subsets: ['latin'], variable: '--font-body' });
@@ -24,14 +25,17 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const currentUser = await getCurrentUser();
+  const canAccessAdmin = currentUser?.status === 'ACTIVE' && (currentUser.role === 'ADMIN' || currentUser.role === 'MODERATOR');
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${display.variable} ${body.variable} ${mono.variable} font-body min-h-screen flex flex-col`}>
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
           <Web3Provider>
             <TooltipProvider delayDuration={200}>
-              <Navbar />
+              <Navbar canAccessAdmin={canAccessAdmin} currentUser={currentUser} />
               <main className="flex-1">{children}</main>
               <Footer />
               <Toaster position="bottom-right" />
