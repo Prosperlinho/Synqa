@@ -34,7 +34,7 @@ export default async function WalletDetailPage({
         <SearchX className="h-10 w-10 mx-auto mb-4 text-muted-foreground opacity-60" />
         <h1 className="font-display text-xl font-semibold mb-2">No known public owner found.</h1>
         <p className="text-sm text-muted-foreground mb-6">
-          This address is not yet indexed by TrustWallet AI. That does not mean it is safe
+          This address is not yet indexed by Synqa. That does not mean it is safe
           or unsafe — we simply have no report or label on record. We never invent
           identities for private wallet owners.
         </p>

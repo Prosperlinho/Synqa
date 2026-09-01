@@ -1,4 +1,4 @@
-# TrustWallet AI
+# Synqa
 
 A Web3 wallet intelligence and reputation platform. Search any blockchain address to see
 its risk score, trust score, verification status, and moderated scam reports — and report

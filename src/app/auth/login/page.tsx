@@ -41,7 +41,7 @@ export default function LoginPage() {
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
           <ShieldCheck className="h-8 w-8 mx-auto text-primary mb-2" />
-          <CardTitle>Sign in to TrustWallet AI</CardTitle>
+          <CardTitle>Sign in to Synqa</CardTitle>
           <CardDescription>Vote, comment, bookmark, and report wallets.</CardDescription>
         </CardHeader>
         <CardContent>

@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-export const metadata = { title: 'Scoring methodology — TrustWallet AI' };
+export const metadata = { title: 'Scoring methodology — Synqa' };
 
 const FACTORS = [
   { label: 'Confirmed malicious address label', effect: '+40 risk', tone: 'risk' },

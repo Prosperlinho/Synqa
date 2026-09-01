@@ -11,6 +11,52 @@ export interface SessionUser {
   status: 'ACTIVE' | 'SUSPENDED' | 'BANNED';
 }
 
+function normalizeEmail(email?: string | null): string | undefined {
+  const value = email?.trim();
+  return value ? value.toLowerCase() : undefined;
+}
+
+function normalizeAddress(address?: string | null): string | undefined {
+  const value = address?.trim();
+  return value ? value.toLowerCase() : undefined;
+}
+
+async function resolveProfileForSupabaseUser(user: { id: string; email?: string | null; user_metadata?: { walletAddress?: string | null } }) {
+  const normalizedEmail = normalizeEmail(user.email);
+  const normalizedWalletAddress = normalizeAddress(user.user_metadata?.walletAddress);
+
+  let profile = await prisma.user.findUnique({ where: { supabaseId: user.id } });
+
+  if (!profile && normalizedEmail) {
+    profile = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { email: { equals: normalizedEmail, mode: 'insensitive' as const } },
+          ...(normalizedWalletAddress ? [{ walletAddress: { equals: normalizedWalletAddress, mode: 'insensitive' as const } }] : []),
+        ],
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  if (profile && profile.supabaseId !== user.id) {
+    try {
+      profile = await prisma.user.update({
+        where: { id: profile.id },
+        data: {
+          supabaseId: user.id,
+          email: profile.email || normalizedEmail || profile.email,
+          updatedAt: new Date(),
+        },
+      });
+    } catch {
+      profile = (await prisma.user.findUnique({ where: { supabaseId: user.id } })) ?? profile;
+    }
+  }
+
+  return profile;
+}
+
 /**
  * Resolves the current request's app-level user (Supabase auth + Prisma profile).
  * Returns null (rather than throwing) whenever Supabase isn't configured yet or
@@ -29,7 +75,7 @@ export async function getCurrentUser(): Promise<SessionUser | null> {
 
     if (!user) return null;
 
-    const profile = await prisma.user.findUnique({ where: { supabaseId: user.id } });
+    const profile = await resolveProfileForSupabaseUser(user);
     if (!profile) return null;
 
     return {

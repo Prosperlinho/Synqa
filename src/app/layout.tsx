@@ -13,12 +13,12 @@ const body = Inter({ subsets: ['latin'], variable: '--font-body' });
 const mono = JetBrains_Mono({ subsets: ['latin'], variable: '--font-mono', weight: ['400', '500', '600'] });
 
 export const metadata: Metadata = {
-  title: 'TrustWallet AI — Web3 Wallet Intelligence & Reputation',
+  title: 'Synqa — Web3 Wallet Intelligence & Reputation',
   description:
     'Search any wallet address to check risk, trust score, scam reports, and verification status across Ethereum, BNB Chain, Solana, and more.',
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? 'https://trustwallet.ai'),
   openGraph: {
-    title: 'TrustWallet AI',
+    title: 'Synqa',
     description: 'Web3 wallet intelligence and reputation platform.',
     type: 'website',
   },

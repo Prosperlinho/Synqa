@@ -35,7 +35,7 @@ export function Navbar() {
             <ShieldCheck className="h-4.5 w-4.5 text-primary" strokeWidth={2.25} />
           </div>
           <span className="font-display text-[15px] font-semibold tracking-tight">
-            TrustWallet <span className="text-primary">AI</span>
+            Synqa
           </span>
         </Link>
 

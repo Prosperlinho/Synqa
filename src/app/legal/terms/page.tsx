@@ -1,4 +1,4 @@
-export const metadata = { title: 'Terms of Service — TrustWallet AI' };
+export const metadata = { title: 'Terms of Service — Synqa' };
 
 export default function TermsPage() {
   return (
@@ -6,7 +6,7 @@ export default function TermsPage() {
       <h1 className="font-display text-3xl font-semibold mb-4">Terms of Service</h1>
       <div className="text-sm text-muted-foreground space-y-4 leading-relaxed">
         <p>
-          This is placeholder legal copy for the TrustWallet AI demo application. Replace
+          This is placeholder legal copy for the Synqa demo application. Replace
           this page with your organization&apos;s actual Terms of Service before launch.
         </p>
         <p>
@@ -22,7 +22,7 @@ export default function TermsPage() {
         </p>
         <p>
           <strong className="text-foreground">No liability for third-party actions.</strong>{' '}
-          TrustWallet AI is not responsible for losses resulting from interactions with
+          Synqa is not responsible for losses resulting from interactions with
           any wallet address, verified or otherwise.
         </p>
       </div>

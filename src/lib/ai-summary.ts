@@ -29,7 +29,7 @@ export function generateAiRiskSummary(evidence: SummaryEvidence): AiRiskSummary 
     if (evidence.isOfficiallyVerified) {
       return {
         headline: 'No scam reports on record. Officially verified.',
-        body: `${evidence.entityName ?? 'This wallet'} has been officially verified by TrustWallet AI and has no approved scam reports. As with any wallet, always confirm transaction details independently before sending funds.`,
+        body: `${evidence.entityName ?? 'This wallet'} has been officially verified by Synqa and has no approved scam reports. As with any wallet, always confirm transaction details independently before sending funds.`,
         confidence: 'high',
         basedOnReports: 0,
         generatedAt: now,

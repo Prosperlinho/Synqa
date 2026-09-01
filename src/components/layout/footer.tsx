@@ -9,7 +9,7 @@ export function Footer() {
         <div className="col-span-2">
           <div className="flex items-center gap-2 mb-3">
             <ShieldCheck className="h-4 w-4 text-primary" />
-            <span className="font-display font-semibold">TrustWallet AI</span>
+            <span className="font-display font-semibold">Synqa</span>
           </div>
           <p className="text-sm text-muted-foreground max-w-sm">
             Community-verified wallet intelligence. We score what evidence shows —
@@ -50,7 +50,7 @@ export function Footer() {
 
       <div className="border-t border-border/70">
         <div className="container py-5 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-muted-foreground">
-          <p>&copy; {new Date().getFullYear()} TrustWallet AI. All scores are estimates, not financial or legal advice.</p>
+          <p>&copy; {new Date().getFullYear()} Synqa. All scores are estimates, not financial or legal advice.</p>
           <p className="font-mono">v1.0.0</p>
         </div>
       </div>

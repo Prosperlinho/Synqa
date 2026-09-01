@@ -30,7 +30,7 @@ export function walletConnectConnector(params: { projectId: string; chains: read
           optionalChains: params.chains.map((c) => c.id) as [number, ...number[]],
           showQrModal: true,
           metadata: {
-            name: 'TrustWallet AI',
+            name: 'Synqa',
             description: 'Web3 wallet intelligence and reputation platform',
             url: typeof window !== 'undefined' ? window.location.origin : 'https://trustwallet.ai',
             icons: ['https://trustwallet.ai/icon.png'],

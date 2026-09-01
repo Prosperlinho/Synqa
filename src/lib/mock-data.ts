@@ -48,7 +48,7 @@ export const MOCK_WALLETS: WalletDetail[] = [
     ],
     aiSummary: {
       headline: 'No scam reports on record. Officially verified.',
-      body: 'Binance Hot Wallet 14 has been officially verified by TrustWallet AI and has no approved scam reports. As with any wallet, always confirm transaction details independently before sending funds.',
+      body: 'Binance Hot Wallet 14 has been officially verified by Synqa and has no approved scam reports. As with any wallet, always confirm transaction details independently before sending funds.',
       confidence: 'high',
       basedOnReports: 0,
       generatedAt: new Date().toISOString(),

@@ -1,13 +1,13 @@
 import { ShieldCheck, Users, Scale } from 'lucide-react';
 
-export const metadata = { title: 'About — TrustWallet AI' };
+export const metadata = { title: 'About — Synqa' };
 
 export default function AboutPage() {
   return (
     <div className="container py-16 max-w-2xl">
-      <h1 className="font-display text-3xl font-semibold mb-4">About TrustWallet AI</h1>
+      <h1 className="font-display text-3xl font-semibold mb-4">About Synqa</h1>
       <p className="text-muted-foreground leading-relaxed mb-8">
-        TrustWallet AI is a community-driven wallet intelligence platform. We help people
+        Synqa is a community-driven wallet intelligence platform. We help people
         check a wallet address before they send funds, interact with a contract, or trust
         a counterparty — by surfacing moderated, evidence-based reports rather than guesses.
       </p>

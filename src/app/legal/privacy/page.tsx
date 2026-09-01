@@ -1,4 +1,4 @@
-export const metadata = { title: 'Privacy Policy — TrustWallet AI' };
+export const metadata = { title: 'Privacy Policy — Synqa' };
 
 export default function PrivacyPage() {
   return (
@@ -6,7 +6,7 @@ export default function PrivacyPage() {
       <h1 className="font-display text-3xl font-semibold mb-4">Privacy Policy</h1>
       <div className="text-sm text-muted-foreground space-y-4 leading-relaxed">
         <p>
-          This is placeholder legal copy for the TrustWallet AI demo application. Replace
+          This is placeholder legal copy for the Synqa demo application. Replace
           this page with your organization&apos;s actual Privacy Policy before launch.
         </p>
         <p>

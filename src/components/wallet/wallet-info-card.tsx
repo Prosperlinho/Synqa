@@ -65,7 +65,7 @@ export function WalletInfoCard({ wallet }: { wallet: WalletDetail }) {
 
         {isUnknownOwner && (
           <p className="mt-4 rounded-md bg-muted/60 p-3 text-xs text-muted-foreground leading-relaxed">
-            No known public owner found. TrustWallet AI does not infer or guess the identity
+            No known public owner found. Synqa does not infer or guess the identity
             of private wallet owners — this address has no verified entity on record.
           </p>
         )}

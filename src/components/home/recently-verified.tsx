@@ -14,7 +14,7 @@ export function RecentlyVerified({ wallets }: { wallets: WalletSummary[] }) {
         <h2 className="font-display text-xl font-semibold">Recently verified wallets</h2>
       </div>
       <p className="text-sm text-muted-foreground mb-6">
-        Entities and exchanges confirmed by TrustWallet AI or the community.
+        Entities and exchanges confirmed by Synqa or the community.
       </p>
 
       {wallets.length === 0 ? (
